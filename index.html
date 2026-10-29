@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenRoots Search - one box, every open genealogy source</title>
+<meta name="description" content="Free, no-login search across open genealogy sources: archive.org, Wikipedia, Wikidata, Open Library, Wikimedia Commons, Google Books inline; Find a Grave, FamilySearch, BillionGraves, Geneanet, WikiTree, the Metis National Database, Manitoba vital stats, LAC and more as one-tap prefilled links.">
+<style>
+  :root{
+    --bg:#faf7f2; --card:#ffffff; --ink:#221f1a; --muted:#6f6a60;
+    --accent:#8a1f2d; --accent-soft:#f3e6e7; --border:#e4ddd2; --ok:#2e6b3f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.45;}
+  header{background:var(--accent);color:#fff;padding:22px 18px 18px;}
+  header h1{margin:0;font-size:1.5rem;letter-spacing:.02em}
+  header p{margin:6px 0 0;font-size:.92rem;opacity:.92;max-width:60ch}
+  main{max-width:900px;margin:0 auto;padding:16px 14px 60px}
+  form{background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  form label{font-size:.78rem;color:var(--muted);display:block;margin-bottom:3px;font-weight:600}
+  form input{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:1rem}
+  form .full{grid-column:1/-1}
+  form button{grid-column:1/-1;background:var(--accent);color:#fff;border:0;border-radius:8px;
+    padding:12px;font-size:1rem;font-weight:700;cursor:pointer}
+  form button:active{transform:translateY(1px)}
+  #chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+  #chips a{background:var(--accent-soft);color:var(--accent);text-decoration:none;
+    border:1px solid #e5c9cb;border-radius:999px;padding:7px 13px;font-size:.85rem;font-weight:600}
+  #chips a:hover{background:#eed9da}
+  .chips-label{font-size:.78rem;color:var(--muted);font-weight:700;margin:14px 2px 0;
+    text-transform:uppercase;letter-spacing:.06em}
+  #results{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  @media (max-width:640px){#results{grid-template-columns:1fr}form{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+  .card h2{margin:0 0 2px;font-size:1rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .card h2 .count{font-size:.75rem;color:var(--muted);font-weight:600;white-space:nowrap}
+  .card .blurb{font-size:.78rem;color:var(--muted);margin:0 0 8px}
+  .card ul{list-style:none;margin:0;padding:0}
+  .card li{padding:7px 0;border-top:1px solid var(--border);font-size:.88rem}
+  .card li a{color:var(--ink);text-decoration:none;font-weight:600}
+  .card li a:hover{color:var(--accent);text-decoration:underline}
+  .card li .sub{display:block;color:var(--muted);font-weight:400;font-size:.78rem}
+  .card .status{font-size:.8rem;color:var(--muted);padding:6px 0}
+  .card .status.err{color:var(--accent)}
+  .card .status.err a{color:var(--accent);font-weight:600}
+  #vitalforms{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  #vitalforms button{background:#fff;border:1px solid var(--border);border-radius:8px;
+    padding:7px 12px;font-size:.83rem;cursor:pointer;color:var(--ink)}
+  #vitalforms button:hover{border-color:var(--accent);color:var(--accent)}
+  footer{margin-top:26px;font-size:.78rem;color:var(--muted);border-top:1px solid var(--border);padding-top:14px}
+  footer p{margin:6px 0;max-width:75ch}
+  #hint{color:var(--accent);font-size:.85rem;font-weight:600;margin-top:8px;display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>OpenRoots Search</h1>
+  <p>One box, every open genealogy source. Live results from free public APIs, one-tap prefilled searches everywhere else. No account, no cookies, nothing stored on our side.</p>
+</header>
+<main>
+  <form id="f">
+    <div><label for="given">First name</label><input id="given" autocomplete="off" placeholder="David"></div>
+    <div><label for="surname">Last name *</label><input id="surname" autocomplete="off" placeholder="Spence"></div>
+    <div><label for="year">Birth year (optional)</label><input id="year" inputmode="numeric" autocomplete="off" placeholder="1824"></div>
+    <div><label for="place">Place (optional)</label><input id="place" autocomplete="off" placeholder="Red River"></div>
+    <button type="submit">Search all sources</button>
+    <div class="full" id="hint">Enter at least a last name.</div>
+  </form>
+
+  <div class="chips-label">Open directly on the source site (prefilled)</div>
+  <div id="chips"></div>
+  <div id="vitalforms"></div>
+
+  <div class="chips-label">Live results from open APIs</div>
+  <div id="results"></div>
+
+  <footer>
+    <p><strong>How it works:</strong> this page queries only official, free, public endpoints (Internet Archive, Wikipedia, Wikidata, Open Library, Wikimedia Commons, Google Books) directly from your browser. Every other source is opened as a prefilled link on that site's own page, so logins and bot protection stay on their side.</p>
+    <p><strong>Privacy:</strong> queries never touch our servers; nothing is logged, tracked, or stored. Do not use this to search for living people. FamilySearch results need a free account on their site; we never ask for or handle any credentials.</p>
+    <p><strong>Source quality:</strong> volunteer-built sites (Find a Grave links, hobbyist trees) are leads, not proof. Verify against primary records: scrip, census, parish registers, vital stats.</p>
+    <p>Open source: github.com/Bayarddevries/openroots-search</p>
+  </footer>
+</main>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const enc = encodeURIComponent;
+
+function timeoutFetch(url, ms){
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms || 10000);
+  return fetch(url, {signal: c.signal}).finally(() => clearTimeout(t));
+}
+
+/* ---------- inline (CORS-verified) sources ---------- */
+const inline = [
+  {
+    id:'archive', name:'Internet Archive (books & texts)', blurb:'Digitized books, registers, newspapers mentioning the name.',
+    home:'https://archive.org/search?query=',
+    run(q){
+      const s = q.surname;
+      const u = 'https://archive.org/advancedsearch.php?q=' + enc('(title:' + s + ' OR creator:' + s + ' OR subject:' + s + ') AND mediatype:texts') +
+        '&fl[]=identifier&fl[]=title&fl[]=creator&fl[]=date' +
+        '&rows=8&output=json';
+      return timeoutFetch(u).then(r => { if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+        .then(j => (j.response.docs||[]).map(d => ({
+          title: d.title || d.identifier,
+          sub: [d.creator, d.date].filter(Boolean).join(' - '),
+          url: 'https://archive.org/details/' + d.identifier
+        })));
+    }
+  },
+  {
+    id:'wiki', name:'Wikipedia', blurb:'Notable people and places with this name.',
+    home:'https://en.wikipedia.org/w/index.php?search=',
+    run(q){
+      const term = [q.given, q.surname].filter(Boolean).join(' ');
+      const u = 'https://en.wikipedia.org/w/api.php?action=opensearch&search=' + enc(term) +
+        '&limit=8&namespace=0&format=json&origin=*';
+      return timeoutFetch(u).then(r => r.json()).then(j =>
+        (j[1]||[]).map((t,i) => ({ title: t, sub: j[2] && j[2][i], url: j[3][i] })));
+    }
+  },
+  {
+    id:'wikidata', name:'Wikidata', blurb:'Structured entries: dates, places, occupations, family links.',
+    home:'https://www.wikidata.org/w/index.php?search=',
+    run(q){
+      const term = [q.given, q.surname].filter(Boolean).join(' ');
+      const u = 'https://www.wikidata.org/w/api.php?action=wbsearchentities&search=' + enc(term) +
+        '&language=en&uselang=en&type=item&limit=8&format=json&origin=*';
+      return timeoutFetch(u).then(r => { if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+        .then(j => (j.search||[]).map(b => ({
+          title: b.label || b.id, sub: b.description || '',
+          url: 'https://www.wikidata.org/wiki/' + b.id
+        })));
+    }
+  },
+  {
+    id:'openlib', name:'Open Library', blurb:'Books about or by people with this name.',
+    home:'https://openlibrary.org/search?q=',
+    run(q){
+      const s = q.surname;
+      const u = 'https://openlibrary.org/search.json?q=' + enc('title:(' + s + ') OR author:(' + s + ')') +
+        '&limit=6&fields=title,author_name,first_publish_year,key';
+      return timeoutFetch(u).then(r => { if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+        .then(j => (j.docs||[]).map(d => ({
+          title: d.title, sub: [d.author_name && d.author_name[0], d.first_publish_year].filter(Boolean).join(' - '),
+          url: 'https://openlibrary.org' + d.key
+        })));
+    }
+  },
+  {
+    id:'gbooks', name:'Google Books', blurb:'Scanned books mentioning the name (may rate-limit).',
+    home:'https://www.google.com/search?tbm=bks&q=',
+    run(q){
+      const term = [q.surname, q.given, q.place].filter(Boolean).join(' ');
+      const u = 'https://www.googleapis.com/books/v1/volumes?q=' + enc(term) +
+        '&maxResults=6&fields=items(volumeInfo(title,authors,publishedDate,infoLink))';
+      return timeoutFetch(u, 8000).then(r => { if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+        .then(j => (j.items||[]).map(v => ({
+          title: v.volumeInfo.title,
+          sub: [v.volumeInfo.authors && v.volumeInfo.authors.join(', '), v.volumeInfo.publishedDate].filter(Boolean).join(' - '),
+          url: v.volumeInfo.infoLink
+        })));
+    }
+  },
+  {
+    id:'commons', name:'Wikimedia Commons (images)', blurb:'Photos, portraits, documents.',
+    home:'https://commons.wikimedia.org/w/index.php?search=',
+    run(q){
+      const name = q.given ? '"' + q.given + ' ' + q.surname + '"' : q.surname;
+      const u = 'https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=' + enc(name + ' filetype:bitmap') +
+        '&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url&iiurlwidth=160&format=json&origin=*';
+      return timeoutFetch(u).then(r => r.json()).then(j => {
+        const pages = j.query ? j.query.pages : {};
+        return Object.values(pages).map(p => {
+          const ii = p.imageinfo && p.imageinfo[0];
+          return { title: p.title.replace(/^File:/,''), sub: '', url: ii ? ii.descriptionurl : ('https://commons.wikimedia.org/wiki/' + p.title) };
+        });
+      });
+    }
+  }
+];
+
+/* ---------- deep-link chips ---------- */
+const chips = [
+  { name:'Find a Grave', url:q => 'https://www.findagrave.com/memorial/search?firstname=' + enc(q.given||'') + '&lastname=' + enc(q.surname) },
+  { name:'FamilySearch (free account)', url:q => 'https://www.familysearch.org/en/search/record/results?q.givenName=' + enc(q.given||'') + '&q.surname=' + enc(q.surname) + (q.year ? '&q.birthLikeDate=' + enc(q.year) : '') },
+  { name:'BillionGraves', url:q => 'https://www.billiongraves.com/search/results?firstName=' + enc(q.given||'') + '&lastName=' + enc(q.surname) },
+  { name:'Geneanet', url:q => 'https://en.geneanet.org/fonds/individus/?go=1&nom=' + enc(q.surname) + (q.given ? '&prenom=' + enc(q.given) : '') },
+  { name:'WikiTree', url:q => 'https://www.wikitree.com/index.php?title=Special:SearchPerson&wpSearch=' + enc([q.given, q.surname].filter(Boolean).join(' ')) },
+  { name:'Metis National Database (scrip/census)', url:q => 'https://www.metisnationdatabase.ca/results.php?family_name=' + enc(q.surname) + (q.given ? '&first_name=' + enc(q.given) : '') },
+  { name:'LAC Collection Search (scrip)', url:q => 'https://recherche-collection-search.bac-lac.gc.ca/eng/Home/Result?q_1=' + enc([q.given, q.surname].filter(Boolean).join(' ')) + '&SEARCH_TYPE=SEARCH_BASIC&q_type_1=q' },
+  { name:'Archive.org full text', url:q => 'https://archive.org/search?query=' + enc([q.given, q.surname].filter(Boolean).join(' ')) },
+  { name:'Chronicling America (US newspapers)', url:q => 'https://chroniclingamerica.loc.gov/search/pages/results?andtext=' + enc([q.given, q.surname].filter(Boolean).join(' ')) },
+  { name:'HathiTrust catalog', url:q => 'https://catalog.hathitrust.org/Search/Home?lookfor=' + enc([q.given, q.surname].filter(Boolean).join(' ')) + '&type=all' },
+  { name:'Automated Genealogy (1901/1911 census)', url:q => 'https://automatedgenealogy.com/' },
+  { name:'Red River Ancestry', url:q => 'https://www.google.com/search?q=' + enc('site:redriverancestry.ca ' + [q.given, q.surname].filter(Boolean).join(' ')) },
+  { name:'Saskatchewan vital stats', url:q => 'https://genealogy.ehealthsask.ca/vsgs_srch.aspx' },
+  { name:"Cyndi's List (source directory)", url:q => 'https://www.cyndislist.com/' }
+];
+
+/* ---------- Manitoba vital stats: cross-origin POST forms ---------- */
+function vitalForms(q){
+  const box = $('#vitalforms'); box.innerHTML = '';
+  const label = document.createElement('span');
+  label.style.cssText = 'font-size:.78rem;color:var(--muted);font-weight:700;align-self:center';
+  label.textContent = 'Manitoba vital stats (opens on gov.mb.ca):';
+  box.appendChild(label);
+  [['Birth','Births'],['Marriage','Marriages'],['Death','Deaths']].forEach(([val, lab]) => {
+    const f = document.createElement('form');
+    f.method = 'POST'; f.action = 'https://vitalstats.gov.mb.ca/ListView.php'; f.target = '_blank';
+    const fields = {
+      BthDthMge: val, lastname: q.surname, LNameType: 'Match Any',
+      givenname: q.given || '', GNameType: 'Match Any',
+      city: q.place || '', PlaceType: 'Match Any', year: q.year || '',
+      DateType: 'Exact', Sort: 'Date', Upper: '100', Lower: '1'
+    };
+    Object.entries(fields).forEach(([k,v]) => {
+      const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i);
+    });
+    const b = document.createElement('button'); b.type = 'submit'; b.textContent = lab;
+    f.appendChild(b); box.appendChild(f);
+  });
+}
+
+/* ---------- render ---------- */
+function cardHTML(src){
+  return '<section class="card" id="card-' + src.id + '"><h2>' + esc(src.name) +
+    ' <span class="count" id="count-' + src.id + '"></span></h2><p class="blurb">' + esc(src.blurb) + '</p>' +
+    '<div class="status" id="status-' + src.id + '">searching...</div><ul id="list-' + src.id + '"></ul></section>';
+}
+
+function renderResults(q){
+  $('#results').innerHTML = inline.map(cardHTML).join('');
+  inline.forEach(src => {
+    src.run(q).then(items => {
+      const st = $('#status-' + src.id); const ul = $('#list-' + src.id); const ct = $('#count-' + src.id);
+      ct.textContent = items.length + (items.length === 1 ? ' hit' : ' hits');
+      if (!items.length){ st.textContent = 'no results for this name'; return; }
+      st.textContent = '';
+      ul.innerHTML = items.map(it => '<li><a href="' + esc(it.url) + '" target="_blank" rel="noopener">' +
+        esc(it.title) + '</a>' + (it.sub ? '<span class="sub">' + esc(it.sub) + '</span>' : '') + '</li>').join('');
+    }).catch(e => {
+      const st = $('#status-' + src.id); const ct = $('#count-' + src.id);
+      ct.textContent = '';
+      st.className = 'status err';
+      st.innerHTML = 'could not load (' + esc(e.message || e) + ') - <a href="' + esc(src.home + [q.given, q.surname].filter(Boolean).join(' ')) + '" target="_blank" rel="noopener">search ' + esc(src.name.split(' ')[0]) + ' directly</a>';
+    });
+  });
+}
+
+function renderChips(q){
+  $('#chips').innerHTML = chips.map(c =>
+    '<a href="' + esc(c.url(q)) + '" target="_blank" rel="noopener">' + esc(c.name) + ' &#8599;</a>').join('');
+}
+
+$('#f').addEventListener('submit', e => {
+  e.preventDefault();
+  const q = {
+    given: $('#given').value.trim(),
+    surname: $('#surname').value.trim(),
+    year: $('#year').value.trim(),
+    place: $('#place').value.trim()
+  };
+  if (!q.surname){ $('#hint').style.display = 'block'; return; }
+  $('#hint').style.display = 'none';
+  renderChips(q);
+  vitalForms(q);
+  renderResults(q);
+  $('#results').scrollIntoView({behavior:'smooth', block:'start'});
+});
+</script>
+</body>
+</html>
